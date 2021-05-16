@@ -8,7 +8,9 @@ import (
 	"github.com/go-oauth2/oauth2/v4/store"
 	"log"
 	"net/http"
+	"oauth2/utils"
 )
+
 
 func main() {
 	// 1.创建管理对象
@@ -37,14 +39,33 @@ func main() {
 			log.Println(err)
 		}
 	})
-	r.GET("login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", nil)
+
+	r.Any("login", func(c *gin.Context) {
+		data:=map[string]string{
+			"error":"",
+		}
+
+		if c.Request.Method==http.MethodPost {
+			name,pass:=c.PostForm("userName"),c.PostForm("userPass")
+			if name+pass=="张三123456" {
+				utils.SaveUserSession(c,name)
+				c.Redirect(http.StatusFound,"/auth?"+c.Request.URL.RawQuery)
+				return
+			} else {
+				data["error"]="用户名或密码错误"
+			}
+		}
+
+		c.HTML(http.StatusOK, "login.html", data)
 	})
 	r.Run(":80")
 }
 
+// userAuthorizeHandler 用户授权
 func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-	w.Header().Set("Location", "login")
-	w.WriteHeader(http.StatusFound)
+	if userID=utils.GetUserSession(r);userID=="" {
+		w.Header().Set("Location", "login?"+r.URL.RawQuery)
+		w.WriteHeader(http.StatusFound)
+	}
 	return
 }
