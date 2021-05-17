@@ -11,7 +11,6 @@ import (
 	"oauth2/utils"
 )
 
-
 func main() {
 	// 1.创建管理对象
 	manager := manage.NewDefaultManager()
@@ -40,19 +39,25 @@ func main() {
 		}
 	})
 
+	r.POST("token", func(c *gin.Context) {
+		if err := s.HandleTokenRequest(c.Writer, c.Request); err != nil {
+			panic(err.Error())
+		}
+	})
+
 	r.Any("login", func(c *gin.Context) {
-		data:=map[string]string{
-			"error":"",
+		data := map[string]string{
+			"error": "",
 		}
 
-		if c.Request.Method==http.MethodPost {
-			name,pass:=c.PostForm("userName"),c.PostForm("userPass")
-			if name+pass=="张三123456" {
-				utils.SaveUserSession(c,name)
-				c.Redirect(http.StatusFound,"/auth?"+c.Request.URL.RawQuery)
+		if c.Request.Method == http.MethodPost {
+			name, pass := c.PostForm("userName"), c.PostForm("userPass")
+			if name+pass == "张三123456" {
+				utils.SaveUserSession(c, name)
+				c.Redirect(http.StatusFound, "/auth?"+c.Request.URL.RawQuery)
 				return
 			} else {
-				data["error"]="用户名或密码错误"
+				data["error"] = "用户名或密码错误"
 			}
 		}
 
@@ -63,7 +68,7 @@ func main() {
 
 // userAuthorizeHandler 用户授权
 func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-	if userID=utils.GetUserSession(r);userID=="" {
+	if userID = utils.GetUserSession(r); userID == "" {
 		w.Header().Set("Location", "login?"+r.URL.RawQuery)
 		w.WriteHeader(http.StatusFound)
 	}
